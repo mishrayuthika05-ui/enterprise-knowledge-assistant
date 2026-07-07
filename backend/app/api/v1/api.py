@@ -1,11 +1,12 @@
 from fastapi import APIRouter
+from app.models.health import HealthResponse
 
 router = APIRouter()
 
 
-@router.get("/health")
+@router.get("/health", response_model=HealthResponse)
 def health():
-    return {
-        "status": "healthy",
-        "message": "Enterprise Knowledge Assistant API is running successfully"
-    }
+    return HealthResponse(
+        status="healthy",
+        message="Enterprise Knowledge Assistant API is running successfully"
+    )
