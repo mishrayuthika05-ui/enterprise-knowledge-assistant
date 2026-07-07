@@ -3,6 +3,7 @@ from fastapi import APIRouter, UploadFile, File
 from app.models.health import HealthResponse
 from app.services.file_service import save_file
 from app.services.parser_service import extract_text
+from app.services.chunk_service import chunk_text
 
 router = APIRouter()
 
@@ -17,16 +18,15 @@ def health():
 
 @router.post("/upload")
 async def upload_document(file: UploadFile = File(...)):
-    # Save uploaded file
-    saved_path = save_file(file)
+    file_path = save_file(file)
 
-    # Extract text from saved file
-    extracted_text = extract_text(saved_path)
+    text = extract_text(file_path)
+
+    chunks = chunk_text(text)
 
     return {
-        "success": True,
         "filename": file.filename,
-        "saved_path": saved_path,
-        "characters": len(extracted_text),
-        "preview": extracted_text[:500]
+        "characters": len(text),
+        "chunks": len(chunks),
+        "first_chunk": chunks[0] if chunks else ""
     }
