@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.api.routes import router
+from app.api.v1.api import router
 from app.core.config import APP_NAME, APP_VERSION
 
 app = FastAPI(
@@ -7,4 +7,4 @@ app = FastAPI(
     version=APP_VERSION
 )
 
-app.include_router(router)
+app.include_router(router, prefix="/api/v1")
