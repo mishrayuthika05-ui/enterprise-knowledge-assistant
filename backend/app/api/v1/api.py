@@ -1,16 +1,24 @@
 from fastapi import APIRouter, UploadFile, File
+from pydantic import BaseModel
 
 from app.models.health import HealthResponse
 from app.services.file_service import save_file
 from app.services.parser_service import extract_text
 from app.services.chunk_service import chunk_text
-from app.services.embedding_service import generate_embeddings
+from app.services.embedding_service import (
+    generate_embeddings,
+    generate_query_embedding,
+)
 from app.services.vector_store import VectorStore
 
 router = APIRouter()
 
-# FAISS Vector Store (in-memory)
+# FAISS Vector Store
 vector_store = VectorStore()
+
+
+class QuestionRequest(BaseModel):
+    question: str
 
 
 @router.get("/health", response_model=HealthResponse)
@@ -35,7 +43,7 @@ async def upload_document(file: UploadFile = File(...)):
     # Generate embeddings
     embeddings = generate_embeddings(chunks)
 
-    # Store embeddings in FAISS
+    # Store in FAISS
     vector_store.add_embeddings(embeddings, chunks)
 
     return {
@@ -43,4 +51,16 @@ async def upload_document(file: UploadFile = File(...)):
         "characters": len(text),
         "chunks": len(chunks),
         "status": "Document indexed successfully"
+    }
+
+
+@router.post("/ask")
+def ask_question(request: QuestionRequest):
+    query_embedding = generate_query_embedding(request.question)
+
+    results = vector_store.search(query_embedding, k=3)
+
+    return {
+        "question": request.question,
+        "results": results
     }
